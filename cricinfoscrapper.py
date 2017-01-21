@@ -52,6 +52,7 @@ def scrape_player(soup, rownum):
 		while(playerInfo != "Playing Role" or playerInfo != "Batting Style"):
 			playerInfo=playerInfo.find_next_siblings("p")
 		player['style'] = isValid(playerInfo.span)'''
+
 		
 		matchDetails=matchDetails.find_next_siblings("td")
 
@@ -72,7 +73,7 @@ def scrape_player(soup, rownum):
 		playerBatting['catches']=isValid(matchDetails[12])
 		playerBatting['stumpings']=isValid(matchDetails[13])
 
-		insertBatting(playerBatting)
+		#insertBatting(playerBatting)
 
 
 		playerData=playerData[1].find_next_siblings("td")
@@ -92,7 +93,21 @@ def scrape_player(soup, rownum):
 			playerBowling['five_wickets']=isValid(playerData[11])
 			playerBowling['ten_wickets']=isValid(playerData[12])
 
-		insertBowling(playerBowling)
+		#insertBowling(playerBowling)
+
+		img = soup.find_all('img')
+		
+		try:
+			imgPath="http://www.espncricinfo.com/"+img[2].get('src').split('html')[0]+'jpg'
+		except:
+			imgPath="default"
+
+		#print imgPath
+
+		player['imgpath']=str(playerBatting['id'])+".jpg"
+
+		print player['imgpath']
+
 
 '''def insert_player(t):
 	#query = 'INSERT INTO player_details (player_name, country, type) VALUES ({:s}, {:s}, {:s}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:d});' 
@@ -133,14 +148,12 @@ def insertBowling(data):
 	cursor.execute(query)
 	conn.commit()
 	cursor.close()
-	
 
 def main():
-	# This part still to be automated
-	r = requests.get('http://www.espncricinfo.com/ci/content/player/player_id.html') 
+	r = requests.get('http://www.espncricinfo.com/ci/content/player/272450.html')
 	soup = BeautifulSoup(r.text, 'html.parser')
 	t = scrape_table(soup)
-	print t
+	#print t
 	'''pid = insert_player(t)
 	t1 = scrape_batting(soup, pid)
 	print t1
