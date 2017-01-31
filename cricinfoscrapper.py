@@ -1,4 +1,4 @@
-from mysql.connector import MySQLConnection, Error
+ffrom mysql.connector import MySQLConnection, Error
 from python_mysql_dbconfig import read_db_config
 import requests
 from bs4 import BeautifulSoup
@@ -44,88 +44,116 @@ def scrape_player(soup, rownum):
 	if matchDetails is not None:
 		playerShortName = soup.find('div',class_="ciPlayernametxt")
 			# player['name'] = isValid(playerInfo.span)
-			# print playerShortName.h1.get_text();
-		player['name'] = playerShortName.h1.get_text()
-		#print "Player Name",player['name']
+			#print playerShortName.h1.string;
+		player['name'] = playerShortName.h1.get_text().encode('ascii', 'ignore')
+		#print type(player['name'])
 		player['country'] = soup.find("h3",class_="PlayersSearchLink").b.string.extract().replace(u'\u2020',' ').encode('utf-8')
-		'''playerInfo=soup.find('p',class_="ciPlayerinformationtxt").b.string.extract().replace(u'\u2020',' ').encode('utf-8')
-		while(playerInfo != "Playing Role" or playerInfo != "Batting Style"):
-			playerInfo=playerInfo.find_next_siblings("p")
-		player['style'] = isValid(playerInfo.span)'''
+		playerInfo=soup.find('p',class_="ciPlayerinformationtxt")
+		playerInfo=playerInfo.find_next_siblings("p")
+		t3 = playerInfo[3].b.string.extract().replace(u'\u2020',' ').encode('utf-8')
+		t4 = playerInfo[4].b.string.extract().replace(u'\u2020',' ').encode('utf-8')
+
+		if t3 == 'Playing role':
+			player['style'] = isValid(playerInfo[3].span)
+		elif t4 == 'Playing role':
+			player['style'] = isValid(playerInfo[4].span)
+		elif t3 == 'Batting style':
+			player['style'] = isValid(playerInfo[3].span)
+		elif t4 == 'Batting style':	
+			player['style'] = isValid(playerInfo[4].span)
+		
+		if player['style'].find('rounder')!=-1:
+			player['playerType']='Allrounder'
+		elif player['style'].find('keeper')!=-1:
+			player['playerType']='Wicketkeeper'
+		elif player['style'].find('bat')!=-1:
+			player['playerType']='Batsman'
+		else:
+			player['playerType']='Bowler'
+				
+		#print player['playerType']
+
+		insertPlayer(player)
 
 		
 		matchDetails=matchDetails.find_next_siblings("td")
 
-		playerBatting['id']=400
-		playerBatting['matches']=isValid(matchDetails[0])
-		playerBatting['inns']=isValid(matchDetails[1])
-		playerBatting['not_outs']=isValid(matchDetails[2])
-		playerBatting['runs']=isValid(matchDetails[3])
+		playerBatting['id']=401
+		playerBatting['matches']=int(isValid(matchDetails[0]))
+		playerBatting['inns']=int(isValid(matchDetails[1]))
+		playerBatting['not_outs']=int(isValid(matchDetails[2]))
+		playerBatting['runs']=int(isValid(matchDetails[3]))
 		high=str(isValid(matchDetails[4]))
 		playerBatting['high_score']=high
-		playerBatting['avg']=isValid(matchDetails[5])
-		playerBatting['balls']=isValid(matchDetails[6])
-		playerBatting['strike_rate']=isValid(matchDetails[7])
-		playerBatting['100s']=isValid(matchDetails[8])
-		playerBatting['50s']=isValid(matchDetails[9])
-		playerBatting['4s']=isValid(matchDetails[10])
-		playerBatting['6s']=isValid(matchDetails[11])
-		playerBatting['catches']=isValid(matchDetails[12])
-		playerBatting['stumpings']=isValid(matchDetails[13])
+		playerBatting['avg']=float(isValid(matchDetails[5]))
+		playerBatting['balls']=int(isValid(matchDetails[6]))
+		playerBatting['strike_rate']=float(isValid(matchDetails[7]))
+		playerBatting['100s']=int(isValid(matchDetails[8]))
+		playerBatting['50s']=int(isValid(matchDetails[9]))
+		playerBatting['4s']=int(isValid(matchDetails[10]))
+		playerBatting['6s']=int(isValid(matchDetails[11]))
+		playerBatting['catches']=int(isValid(matchDetails[12]))
+		playerBatting['stumpings']=int(isValid(matchDetails[13]))
 
-		#insertBatting(playerBatting)
+		insertBatting(playerBatting)
 
 
 		playerData=playerData[1].find_next_siblings("td")
 		if  playerData is not None :
 			playerBowling['id']=playerBatting['id']
 			playerBowling['matches']=playerBatting['matches']
-			playerBowling['inns']=isValid(playerData[1])
-			playerBowling['balls']=isValid(playerData[2])
-			playerBowling['runs']=isValid(playerData[3])
-			playerBowling['wickets']=isValid(playerData[4])
+			playerBowling['inns']=int(isValid(playerData[1]))
+			playerBowling['balls']=int(isValid(playerData[2]))
+			playerBowling['runs']=int(isValid(playerData[3]))
+			playerBowling['wickets']=int(isValid(playerData[4]))
 			playerBowling['bbi']=isValid(playerData[5])
 			playerBowling['bbm']=isValid(playerData[6])
-			playerBowling['avg']=isValid(playerData[7])
-			playerBowling['economy']=isValid(playerData[8])
-			playerBowling['strike_rate']=isValid(playerData[9])
-			playerBowling['four_wickets']=isValid(playerData[10])
-			playerBowling['five_wickets']=isValid(playerData[11])
-			playerBowling['ten_wickets']=isValid(playerData[12])
+			playerBowling['avg']=float(isValid(playerData[7]))
+			playerBowling['economy']=float(isValid(playerData[8]))
+			playerBowling['strike_rate']=float(isValid(playerData[9]))
+			playerBowling['four_wickets']=int(isValid(playerData[10]))
+			playerBowling['five_wickets']=int(isValid(playerData[11]))
+			playerBowling['ten_wickets']=int(isValid(playerData[12]))
 
-		#insertBowling(playerBowling)
+		insertBowling(playerBowling)
+		
+		imagediv = soup.find('div', class_="pnl490M")
 
-		img = soup.find_all('img')
+		img = imagediv.find_all('img')
 		
 		try:
-			imgPath="http://www.espncricinfo.com/"+img[2].get('src').split('html')[0]+'jpg'
+			imgPath="http://www.espncricinfo.com"+img[0].get('src').split('html')[0]+'jpg'
 		except:
 			imgPath="default"
-
-		#print imgPath
-
+		
+		print imgPath
+		img_dload = requests.get(imgPath, stream=True)
 		player['imgpath']=str(playerBatting['id'])+".jpg"
+		#player['imgpath']="4451.png"
+		
+		with open("player_images/" + player['imgpath'], 'wb') as fp:
+			for chunk in img_dload.iter_content(chunk_size=34):
+				fp.write(chunk)
+		
 
 		print player['imgpath']
 
 
-'''def insert_player(t):
+def insertPlayer(data):
 	#query = 'INSERT INTO player_details (player_name, country, type) VALUES ({:s}, {:s}, {:s}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:d});' 
 
-	query = 'INSERT INTO player_details (player_name, country, type) VALUES (%s, %s, %s);' 
-	args = t
+	query = "INSERT INTO player_details (player_name, country, type) VALUES ('{}', '{}', '{}')".format(data['name'], data['country'], data['playerType']) 
 	#qf = query.format(*t)
 	#print qf
 	db_config = read_db_config()
 	conn = MySQLConnection(**db_config)
 	cursor = conn.cursor()
-	cursor.execute(query, args)
+	cursor.execute(query)
 	conn.commit()
-	pid = cursor.lastrowid
-	print pid
-	return pid
+	#pid = cursor.lastrowid
+	#print pid
+	#return pid
 	cursor.close()
-	 '''
 	
 
 def insertBatting(data):
@@ -149,19 +177,13 @@ def insertBowling(data):
 	conn.commit()
 	cursor.close()
 
+
 def main():
-	r = requests.get('http://www.espncricinfo.com/ci/content/player/272450.html')
+	r = requests.get('http://www.espncricinfo.com/ci/content/player/625371.html')
 	soup = BeautifulSoup(r.text, 'html.parser')
 	t = scrape_table(soup)
 	#print t
-	'''pid = insert_player(t)
-	t1 = scrape_batting(soup, pid)
-	print t1
-	insert_batting(t1)
-	t2 = scrape_bowling(soup, pid)
-	print t2
-	insert_bowling(t2)
-	'''
+	
 	
 
 if __name__ == "__main__":
